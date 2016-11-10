@@ -7,7 +7,8 @@ import java.util.regex.Pattern;
 public class MineSweeperImpl implements MineSweeper {
 
     private static final String ASTERISK = "*";
-    private static final String MINE_FIELD_REG_EXP = "(([\\.\\*])+([\\\\n]+))+$";
+    private static final String MINE_FIELD_REG_EXP = "^([\\.\\*\\n])+$";
+    public static final String END_LINE_CHARACTER = "\n";
     private String[][] mineMatrix;
     private int rowsCount;
 
@@ -23,7 +24,10 @@ public class MineSweeperImpl implements MineSweeper {
 
 
     private String[][] initializeMatrix(String mineField) {
-        String[] rows = mineField.split("\\\\n");
+        String[] rows = mineField.split(END_LINE_CHARACTER);
+        if (isJaggedArray(rows)) {
+            throw new IllegalArgumentException();
+        }
         rowsCount = rows.length;
         String[][] mineMatrix = new String[rows.length][rows[0].length()];
         for (int i = 0; i < rows.length; i++) {
@@ -31,6 +35,10 @@ public class MineSweeperImpl implements MineSweeper {
                 mineMatrix[i][j] = String.valueOf(rows[i].charAt(j));
         }
         return mineMatrix;
+    }
+
+    private boolean isJaggedArray(String[] rows) {
+        return !Arrays.stream(rows).map(r -> r.length()).allMatch(s -> s.equals(rows[0].length()));
     }
 
     @Override
@@ -61,17 +69,27 @@ public class MineSweeperImpl implements MineSweeper {
     }
 
     private String getFormattedString() {
-        String constructedString = Arrays.deepToString(mineMatrix).replaceAll("[\\[\\],]", "").replaceAll("\\s", "");
-        StringBuilder stringBuilder = new StringBuilder(constructedString);
-        int everyForthIndex = constructedString.length();
+        StringBuilder matrixStringBuilder = getConvertedMineMatrix();
+        int everyForthIndex = matrixStringBuilder.toString().length();
         while (everyForthIndex > 0) {
-            stringBuilder.insert(everyForthIndex, "\\n");
+            matrixStringBuilder.insert(everyForthIndex, END_LINE_CHARACTER);
             everyForthIndex = everyForthIndex - (rowsCount + 1);
         }
-        return stringBuilder.toString();
+        return matrixStringBuilder.toString();
+    }
+
+    private StringBuilder getConvertedMineMatrix() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < mineMatrix.length; i++) {
+            for (int j = 0; j < mineMatrix[i].length; j++) {
+                stringBuilder.append(mineMatrix[i][j]);
+            }
+        }
+        return stringBuilder;
     }
 
     private boolean isMine(int i, int j) {
         return mineMatrix[i][j].equals(ASTERISK);
     }
 }
+
